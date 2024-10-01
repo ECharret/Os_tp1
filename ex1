@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include<sys/mman.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+	int data=100;
+	int bss=0;
+	const char *str;
+
+int main(){
+	int stack;
+	int *heap=malloc(sizeof(int));
+	void libc(){};
+	//char *mmap;
+	mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1,0);
+
+	printf("data :  %p \n",&data);
+	printf("bss :  %p \n",&bss);
+	printf("str :  %p \n",&str);
+	printf("heap :  %p \n",&heap);
+	printf("stack :  %p \n",&stack);
+	printf("main :  %p \n",&main);
+	printf("LibC :  %p \n",&libc);
+	printf("mmap :  %p \n",&mmap);
+
+	pid_t pid=getpid();
+	char newpid[50];
+	sprintf(newpid,"%i",pid);
+	
+	int autrepid = fork();
+	int status; 
+
+	if (autrepid != 0){
+		wait(&status);
+	}
+	else{
+		execlp("pmap","pmap", "-x", newpid,NULL);
+	}
+	return 1;
+}
