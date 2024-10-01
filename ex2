@@ -1,0 +1,29 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include<sys/mman.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include<sys/types.h>
+
+int main(){
+	struct stat memory;
+	int file=open("test.txt",O_RDWR);
+	stat("test.txt",& memory);
+	size_t size=memory.st_size;
+	printf("%ld \n", size);
+
+	char *map=mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, file,0); //mapping
+	
+	for(size_t i=0; i<size/2; i++){ //bytes inversion 
+		char temp=map[i];
+		map[i]=map[size-i-1];
+		map[size-i-1]=temp;
+	}
+
+	munmap(map,size);  //end of mapping
+	close(file);
+	return 1;
+}
