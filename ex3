@@ -6,6 +6,12 @@ typedef struct elem{
 	struct elem *next;
 }elem;
 
+typedef struct doublel{
+	int value;
+	struct doublel *previous;
+	struct doublel *next;
+}doublel
+
 elem* createliste(int n){
 	elem *liste, *curr;
 	liste=NULL;
