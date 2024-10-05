@@ -1,0 +1,130 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct elem{
+	int value;
+	struct elem *next;
+}elem;
+
+elem* createliste(int n){
+	elem *liste, *curr;
+	liste=NULL;
+	for(int i=0; i<n;i++){
+		curr=(malloc(sizeof(elem)));
+		curr->value=n-i-1;
+		curr->next=liste;
+		liste=curr;
+	};
+	return liste;
+};
+
+int lenghtliste(elem *liste){
+	elem* curr=liste;
+	int n=0;
+	while(curr!=NULL){
+		n++;
+		curr=curr->next;
+	};
+	return n;
+};
+
+void display(elem* liste){
+	elem* curr=liste;
+	if(liste==NULL){
+		printf("empty liste <%p>", &liste);
+		return;
+	};
+	printf("<%p>",&curr);
+	while(curr->next!=NULL){
+		printf("%i\n<%p>",curr->value,&curr->next);
+		curr=curr->next;
+	};
+	printf("%i\n",curr->value);
+	return ;
+};
+
+elem* suppfirst(elem* liste){
+	if(liste==NULL){
+		return NULL;
+	};
+	elem* newliste=liste->next;
+	free(liste);
+	return newliste;
+};
+
+void supplast(elem* liste){
+	elem* curr=liste;
+	if(liste==NULL){
+		return;
+	};
+	elem *temp=curr;
+	while(curr->next!=NULL){
+		temp=curr;
+		curr=curr->next;
+	};
+	free(curr);
+	temp->next=NULL;
+	return ;
+};
+
+void addlast(elem* liste, elem* new){
+	elem* curr=liste;
+	if(liste==NULL){
+		liste=new;
+		return;
+	};
+	while(curr->next!=NULL){
+		curr=curr->next;
+	};
+	curr->next=new;
+	return ;
+}
+
+elem* addfirst(elem* liste, elem* new){
+	new->next=liste;
+	return new;
+};
+
+void merge(elem* liste1, elem* liste2){
+	addlast(liste1,liste2);
+	return;
+};
+
+void dofct(elem* liste, int (*fct)(int)){
+	if(liste==NULL){
+		return;
+	};
+	elem* curr=liste;
+	while(curr!=NULL){
+		curr->value=(*fct)(curr->value);
+		curr=curr->next;
+	};
+	return;
+};
+
+int test(int a){
+	return a*a;
+}
+
+int main(){
+	elem *liste=createliste(3);
+	int lenght=lenghtliste(liste);
+	printf("lenght: %i \n",lenght);
+	display(liste);
+	elem* liste2=suppfirst(liste);
+	supplast(liste2);
+	printf("lenght: %i \n",lenghtliste(liste2));
+	display(liste2);
+	elem* element1=createliste(1);
+	elem* element2=createliste(1);
+	addlast(liste2,element1);
+	elem* liste3=addfirst(liste2,element2);
+	printf("lenght: %i \n",lenghtliste(liste3));
+	display(liste3);
+	elem* liste4=createliste(3);
+	dofct(liste4,&test);
+	merge(liste3,liste4);
+	printf("lenght: %i \n",lenghtliste(liste3));
+	display(liste3);
+	return 1;
+}
