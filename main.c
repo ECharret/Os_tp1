@@ -4,15 +4,16 @@
 #include <stdbool.h>
 
 typedef struct HEADER_TAG {
-	struct HEADER_TAG * ptr_next; /* pointe sur le prochain bloc libre */
-	size_t bloc_size; /* taille du memory bloc en octets*/
-	long magic_number; /* 0x0123456789ABCDEF*/
+	struct HEADER_TAG *ptr_next;  //pointe sur le prochain bloc libre 
+	ssize_t bloc_size; // taille du memory bloc en octets
+	long magic_number;  //0x0123456789ABCDEF
 } HEADER;
 
 HEADER *freeliste=NULL;
+ssize_t headsize=sizeof(HEADER);
 
 void testoverflow(void *ptr){
-	HEADER *head=ptr-sizeof(HEADER);
+	HEADER *head=ptr-headsize;
 	size_t size=head->bloc_size;
 	long firstmn=head->magic_number;
 	long* lastmn=(ptr+size);
@@ -23,28 +24,61 @@ void testoverflow(void *ptr){
 	return;
 };
 
-void * malloc_3is(ssize_t x){
-	HEADER *head=sbrk(sizeof(HEADER)+x+sizeof(long));
+void *malloc_3is(ssize_t x){
+	HEADER *curr=freeliste;
+	HEADER *temp=curr;
+	while(curr!=NULL){
+		if(x<=(freeliste->bloc_size)){
+			void *pointeurx=freeliste+headsize;
+			freeliste=NULL;
+			printf("beginning of x : %p \n",pointeurx);
+			return pointeurx;
+		}
+		if(x<=curr->bloc_size){
+			temp->ptr_next=curr->ptr_next;
+			curr->ptr_next=NULL;
+			curr->magic_number=0x0123456789ABCDEF;
+			void* pointeurx=curr+headsize;
+			printf("beginning of x : %p \n",pointeurx);
+			return pointeurx;
+		}
+		temp=curr;
+		curr=curr->ptr_next-headsize;
+	}
+	HEADER *head=sbrk(headsize+x+sizeof(long));
 	head->ptr_next=NULL;
 	head->bloc_size=x;
 	head->magic_number=0x0123456789ABCDEF;
-	void *pointeurx=head+1;
-	void *magic=pointeurx+x;
+	void* pointeurx=head+1;
+	void* magic=pointeurx+x;
 	long* lastmn=(pointeurx+x);
 	*lastmn=0x0123456789ABCDEF;
-	printf("beginning : %p\n",pointeurx-sizeof(HEADER));
-	printf("beginning of x: %p\n",pointeurx);
-	printf("beginning of magic number: %p\n",magic);
-	printf("size of x: %li\n",magic-pointeurx);
+	printf("beginning  %p\n",pointeurx-headsize);
+	printf("beginning of x %p\n",pointeurx);
+	printf("beginning of magic number %p\n",magic);
+	printf("size of x %li\n",magic-pointeurx);
 	return pointeurx;
-};
+}
 
 void free_3is(void *ptr){
 	testoverflow(ptr);
-	HEADER *head=ptr-sizeof(HEADER);
-	head->ptr_next=freeliste;
-	freeliste=head;
-	printf("freeliste: %p \n",freeliste);
+	
+	HEADER *head=ptr-headsize;
+	
+
+	if(freeliste==NULL||head->bloc_size<freeliste->bloc_size){
+		head->ptr_next=freeliste;
+		freeliste=head;
+		return;
+	};
+	HEADER *curr=freeliste;
+	HEADER *temp=freeliste;
+	while(head->bloc_size>curr->bloc_size){
+		temp=curr;
+		curr=curr->ptr_next-headsize;
+	};
+	head->ptr_next=temp->ptr_next;
+	temp->ptr_next=ptr;
 	return;
 };
 
@@ -53,5 +87,6 @@ void free_3is(void *ptr){
 int main(){
 	void *test=malloc_3is(200);
 	free_3is(test);
+	void *test2=malloc_3is(100);
 	return 1;
 }
