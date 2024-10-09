@@ -30,6 +30,8 @@ void * malloc_3is(ssize_t x){
 	head->magic_number=0x0123456789ABCDEF;
 	void *pointeurx=head+1;
 	void *magic=pointeurx+x;
+	long* lastmn=(pointeurx+x);
+	*lastmn=0x0123456789ABCDEF;
 	printf("beginning : %p\n",pointeurx-sizeof(HEADER));
 	printf("beginning of x: %p\n",pointeurx);
 	printf("beginning of magic number: %p\n",magic);
@@ -51,10 +53,5 @@ void free_3is(void *ptr){
 int main(){
 	void *test=malloc_3is(200);
 	free_3is(test);
-	return 1;
-}
-
-int main(){
-	void *test=malloc_3is(200);
 	return 1;
 }
