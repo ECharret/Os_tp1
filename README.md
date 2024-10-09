@@ -1,5 +1,5 @@
-# Os_tp1
+# Os_tp2
 Estelle CHARRET Souhaila BERDIJ
-Segmentation mémoire et listes chaînées
+Allocateur de mémoire sécurisé
 
 ## Exercice 1
