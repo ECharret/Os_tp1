@@ -35,25 +35,27 @@ void *malloc_3is(size_t x){
 			return ptrx;
 		}
 		if(x<=curr->bloc_size){ 
+			void* ptrx=curr+1;
+			temp->ptr_next=curr->ptr_next;
+
 			if(x==curr->bloc_size||curr->bloc_size-x<headsize+sizeof(long)){
-				void* ptrx=curr+1;
-				temp->ptr_next=curr->ptr_next;
 				curr->ptr_next=NULL;
 				curr->magic_number=0x0123456789ABCDEF;
 				printf("beginning of x : %p \n",ptrx);
 				return ptrx;
 			}
-			void* ptrx=curr+1;
+
 			//creation of the new bloc
 			HEADER *newhead=ptrx+x+sizeof(long);
-			temp->ptr_next=newhead;
-			newhead->ptr_next=curr->ptr_next;
+			newhead->ptr_next=NULL;
 			newhead->magic_number=0x0123456789ABCDEF;
 			size_t newsize=curr->bloc_size-x-headsize-sizeof(long);
 			newhead->bloc_size=newsize;
 			void* newptr=newhead+1;
 			long* lastmn=(newptr+newsize);
 			*lastmn=0x0123456789ABCDEF;
+			
+			free(ptrx); //sort the new bloc
 			
 			//initialisation of the out bloc
 			curr->bloc_size=x;
@@ -80,24 +82,42 @@ void *malloc_3is(size_t x){
 	return pointeurx;
 }
 
-void free_3is(void *ptr){ //ascending order
+void free_3is(void *ptr){ //ascending adresse order
 	testoverflow(ptr);
 	
 	HEADER *head=ptr-headsize;
-	
+	void* headsend=ptr+head->bloc_size+sizeof(long);
 
-	if(freeliste==NULL||head->bloc_size<freeliste->bloc_size){
+	if(freeliste==NULL||head<freeliste){
 		head->ptr_next=freeliste;
+		if(headsend==freeliste){
+			head->ptr_next=freeliste->ptr_next;
+			head->bloc_size=head->bloc_size+sizeof(long)+headsize+freeliste->bloc_size;
+		}
 		freeliste=head;
 		return;
 	};
+	
 	HEADER *curr=freeliste;
 	HEADER *temp=NULL;
-	while(head->bloc_size>curr->bloc_size){
+	while(curr!=NULL||head>curr){
 		temp=curr;
 		curr=curr->ptr_next;
 	};
+	
+	void* tempsend=ptr+temp->bloc_size+sizeof(long);
+
 	temp->ptr_next=head;
+	if(tempsend==head){
+		temp->ptr_next=curr;
+		temp->bloc_size=temp->bloc_size+sizeof(long)+headsize+head->bloc_size;
+	}
+	
+	if(headsend==curr){ //we are sure that curr!=NULL
+		head->ptr_next=curr->ptr_next;
+		head->bloc_size=head->bloc_size+sizeof(long)+headsize+curr->bloc_size;
+		return;
+	}
 	head->ptr_next=curr;
 	return;
 };
