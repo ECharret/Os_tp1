@@ -26,24 +26,24 @@ void testoverflow(void *ptr){
 
 void *malloc_3is(ssize_t x){
 	HEADER *curr=freeliste;
-	HEADER *temp=curr;
+	HEADER *temp=NULL;
 	while(curr!=NULL){
 		if(x<=(freeliste->bloc_size)){
-			void *pointeurx=freeliste+headsize;
+			void *pointeurx=freeliste+1;
 			freeliste=NULL;
 			printf("beginning of x : %p \n",pointeurx);
 			return pointeurx;
 		}
 		if(x<=curr->bloc_size){
+			void* pointeurx=curr+1;
 			temp->ptr_next=curr->ptr_next;
 			curr->ptr_next=NULL;
 			curr->magic_number=0x0123456789ABCDEF;
-			void* pointeurx=curr+headsize;
 			printf("beginning of x : %p \n",pointeurx);
 			return pointeurx;
 		}
 		temp=curr;
-		curr=curr->ptr_next-headsize;
+		curr=curr->ptr_next;
 	}
 	HEADER *head=sbrk(headsize+x+sizeof(long));
 	head->ptr_next=NULL;
@@ -72,16 +72,24 @@ void free_3is(void *ptr){
 		return;
 	};
 	HEADER *curr=freeliste;
-	HEADER *temp=freeliste;
+	HEADER *temp=NULL;
 	while(head->bloc_size>curr->bloc_size){
 		temp=curr;
-		curr=curr->ptr_next-headsize;
+		curr=curr->ptr_next;
 	};
-	head->ptr_next=temp->ptr_next;
-	temp->ptr_next=ptr;
+	temp->ptr_next=head;
+	head->ptr_next=curr;
 	return;
 };
 
+
+
+int main(){
+	void *test=malloc_3is(200);
+	free_3is(test);
+	void *test2=malloc_3is(100);
+	return 1;
+}
 
 
 int main(){
