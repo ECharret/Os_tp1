@@ -18,10 +18,12 @@ Memory Allocation (malloc_3is):
 Searches for a sufficiently large free block in the list.
 If no block is available, the heap is expanded using sbrk().
 Magic_numbers are placed before and after each block to detect overflows.
+
 Memory Deallocation (free_3is):
 Verifies the integrity of the memory block using magic_numbers.
 Inserts the freed block back into the list of free blocks, sorted by increasing address.
 Merges adjacent free blocks to reduce fragmentation.
+
 Overflow Detection:
 Each allocated block is enclosed by magic_numbers (0x0123456789ABCDEF). If these numbers are altered, the program detects a memory overflow and exits.
 ## Progress
