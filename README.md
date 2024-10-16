@@ -1,5 +1,2 @@
-# Os_tp1
+# Os_tp
 Estelle CHARRET Souhaila BERDIJ
-Segmentation mémoire et listes chaînées
-
-## Exercice 1
