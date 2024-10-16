@@ -1,0 +1,36 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <string.h>
+#include <unistd.h>
+#include "tosfs.h"
+#include <fuse_lowlevel.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <assert.h>
+
+int main(){
+	struct stat memory;
+	int file=open("test_tosfs_files",O_RDWR);
+	stat("test_tosfs_files",& memory);
+	size_t size=memory.st_size;
+
+	char *map=mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, file,0); //mapping
+	
+	struct tosfs_superblock *sb=map;
+	printf("magic number %02x \n",sb->magic);
+	printf("block bitmap %02x \n",sb->block_bitmap);
+	printf("inode bitmap %02x \n",sb->inode_bitmap);
+	printf("block size %02x \n",sb->block_size);
+	printf("blocks %02x \n",sb->blocks);
+	printf("inodes %02x \n",sb->inodes);
+	printf("root inode %02x \n",sb->root_inode);
+
+	munmap(map,size);  //end of mapping
+	close(file);
+	return 1;
+
+}
