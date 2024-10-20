@@ -12,25 +12,75 @@
 #include <fcntl.h>
 #include <assert.h>
 
-int main(){
-	struct stat memory;
-	int file=open("test_tosfs_files",O_RDWR);
-	stat("test_tosfs_files",& memory);
-	size_t size=memory.st_size;
+struct stat memory;
+int file = open ("test_tosfs_files"), O_RDWR);
+stat ("test_tosfs_files", & memory);
+size_t size = memory.st_size;
 
-	char *map=mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, file,0); //mapping
+char *map = mmap (NULL, size, PROT_READ | PROT_WRITE |, MAP_SHARED, file, 0); //mapping
 	
-	struct tosfs_superblock *sb=map;
-	printf("magic number %02x \n",sb->magic);
-	printf("block bitmap %02x \n",sb->block_bitmap);
-	printf("inode bitmap %02x \n",sb->inode_bitmap);
-	printf("block size %02x \n",sb->block_size);
-	printf("blocks %02x \n",sb->blocks);
-	printf("inodes %02x \n",sb->inodes);
-	printf("root inode %02x \n",sb->root_inode);
+struct tosfs_superblock *sb=map;
 
-	munmap(map,size);  //end of mapping
+struct tosfs_inode *inode=map+sb->block_size*(sb->inodes +3); // positionning to the
+//beginning of the inode table (supeblock + n blocks + inode bitmap + block bitmap)
+
+
+
+void getattr_3is(){
+	for(int i=1; i<sb->inodes;i++){
+		printf("size: %u", inode->size);
+		printf("blocks: %u", inode->block_no);
+		printf("IO Blocks: %u", sb->block_size);
+		printf("mode: %u", inode->mode);
+		printf("Inode: %u", inode->inode);
+		printf("Links: %u", inode->nlink);
+		printf("Access: %u", inode->perm);
+		printf("Uid: %u", inode->uid);
+		printf("Gid: %u", inode->gid);
+	}
+	return;
+}
+
+
+
+static struct fuse_lowlevel_ops hello_ll_oper = {
+	.lookup		= hello_ll_lookup,
+	.getattr	= hello_ll_getattr,
+	.readdir	= hello_ll_readdir,
+	.open		= hello_ll_open,
+	.read		= hello_ll_read,
+};
+
+int main(int argc, char *argv[])
+{
+	
+	
+	munmap(map,size); //end of mapping
 	close(file);
-	return 1;
+	
+	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+	struct fuse_chan *ch;
+	char *mountpoint;
+	int err = -1;
 
+	if (fuse_parse_cmdline(&args, &mountpoint, NULL, NULL) != -1 &&
+	    (ch = fuse_mount(mountpoint, &args)) != NULL) {
+		struct fuse_session *se;
+
+		se = fuse_lowlevel_new(&args, &hello_ll_oper,
+				       sizeof(hello_ll_oper), NULL);
+		if (se != NULL) {
+			if (fuse_set_signal_handlers(se) != -1) {
+				fuse_session_add_chan(se, ch);
+				err = fuse_session_loop(se);
+				fuse_remove_signal_handlers(se);
+				fuse_session_remove_chan(ch);
+			}
+			fuse_session_destroy(se);
+		}
+		fuse_unmount(mountpoint, ch);
+	}
+	fuse_opt_free_args(&args);
+
+	return err ? 1 : 0;
 }
